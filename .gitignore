@@ -1,0 +1,13 @@
+/.lake
+.DS_Store
+
+# LaTeX build artefacts
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Private notes
+/docs
