@@ -13,7 +13,34 @@ variable {n : ℕ}
 
 theorem act_add (g : CGate n) (p q : SPauli n) :
     act g (p + q) = act g p + act g q := by
-  sorry
+    cases g with
+    | H a =>
+      ext i
+      · simp only [act, SPauli.add_x, SPauli.add_z, Pi.add_apply]
+        split_ifs
+        · rfl
+        · rfl
+      · simp only [act, SPauli.add_x, SPauli.add_z, Pi.add_apply]
+        split_ifs
+        · rfl
+        · rfl
+    | S a =>
+      ext i
+      · simp only [act, SPauli.add_x, SPauli.add_z, Pi.add_apply]
+      · simp only [act, SPauli.add_x, SPauli.add_z, Pi.add_apply]
+        split_ifs
+        · ring
+        · rfl
+    | CNOT a b =>
+      ext i
+      · simp only [act, SPauli.add_x, SPauli.add_z, Pi.add_apply]
+        split_ifs
+        · ring
+        rfl
+      · simp only [act, SPauli.add_x, SPauli.add_z, Pi.add_apply]
+        split_ifs
+        · ring
+        · rfl
 
 theorem run_add (c : Circuit n) (p q : SPauli n) :
     run c (p + q) = run c p + run c q := by

@@ -36,4 +36,9 @@ example : ∀ p : SPauli 2,
 example : ∀ p : SPauli 1, run [S 0, S 0] p = run [] p :=
   check_sound _ _ (by decide)
 
+#eval act (H 0) (X 0 : SPauli 1)          -- Z
+#eval act (S 0) (X 0 : SPauli 1)          -- Y
+#eval act (CNOT 0 1) (Z 1 : SPauli 2)     -- ZZ
+#eval act (H 1) (X 0 + Z 1 : SPauli 2)    -- XX  (X⊗Z, then H on qubit 1 turns Z into X)
+
 end CliffordEquiv

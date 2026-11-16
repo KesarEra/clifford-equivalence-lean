@@ -3,6 +3,7 @@
 | Date | Hours | Brief description |
 |---|---|---|
 | 2026-10-27 | 1.5 | Created the git repo and Lean + Mathlib project, pinned to `v4.36.0-rc1`. Statements compile with `sorry`; demo identities pass `decide`. [Details](#2026-10-27-repo-and-project-setup) |
+| 2026-11-16 | 2 | Proved `act_add` (each gate's action respects addition of Paulis): the first theorem without `sorry`. Added `#eval` gate checks to `Examples.lean`. [Details](#2026-11-16-proved-act_add) |
 
 ---
 
@@ -51,3 +52,29 @@ passes on all five, but they are only fully verified once `check_sound` is prove
 - No commit.
 - No `LICENSE` (week 5; Apache-2.0 would match Mathlib).
 - No GitHub remote.
+
+## 2026-11-16: Proved act_add
+
+**What it says:** `act g (p + q) = act g p + act g q`. Applying a gate to a product of Paulis
+(addition of bit vectors) is the same as applying it to each and multiplying. In matrix terms,
+U(PQ)U† = (UPU†)(UQU†).
+
+**How the proof works** (`CliffordEquiv/Linear.lean`):
+1. `cases g with | H a => … | S a => … | CNOT a b => …` gives one case per gate.
+2. `ext i` turns equality of two Paulis into two goals: the `x` parts agree at every qubit `i`,
+   and the `z` parts agree at every `i`.
+3. `simp only [act, SPauli.add_x, SPauli.add_z, Pi.add_apply]` unfolds the gate rule and the
+   addition, leaving goals with `if i = a then … else …`.
+4. `split_ifs` splits into the case where `i` is the qubit the gate touches and the case where it isn't.
+5. Close each case with `rfl` (both sides identical) or `ring` (equal after rearranging).
+
+**What I learned:**
+- Without `ext i` first, `simp only` gets stuck: the goal compares whole Paulis
+  (`{ x := …, z := … }`), and the addition lemmas only apply to a single component.
+- `rfl` only works when both sides are literally the same; `ring` handles reordering and brackets.
+- If `simp only` already closes a goal (S doesn't change `x`), a following `split_ifs` errors with "no goals".
+- Lean 4 is indentation-sensitive: lines under a case or a `·` bullet must be indented further than it.
+- Background: what H, S and CNOT do as matrices, the two-bits-per-qubit Pauli representation, and
+  why the gate rules in `act` are what conjugation gives (N&C 10.5.1–10.5.2).
+
+**Next:** `run_add`, by induction on the circuit.
