@@ -44,7 +44,12 @@ theorem act_add (g : CGate n) (p q : SPauli n) :
 
 theorem run_add (c : Circuit n) (p q : SPauli n) :
     run c (p + q) = run c p + run c q := by
-  sorry
+    induction c generalizing p q with
+    | nil => rfl
+    | cons g gs ih =>
+      simp only [run_cons]
+      rw [act_add]
+      rw [ih]
 
 /-- If two circuits agree on every basis Pauli, they agree on every Pauli. -/
 theorem run_eq_of_basis (c₁ c₂ : Circuit n)

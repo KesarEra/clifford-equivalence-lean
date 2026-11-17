@@ -4,6 +4,7 @@
 |---|---|---|
 | 2026-10-27 | 1.5 | Created the git repo and Lean + Mathlib project, pinned to `v4.36.0-rc1`. Statements compile with `sorry`; demo identities pass `decide`. [Details](#2026-10-27-repo-and-project-setup) |
 | 2026-11-16 | 2 | Proved `act_add` (each gate's action respects addition of Paulis): the first theorem without `sorry`. Added `#eval` gate checks to `Examples.lean`. [Details](#2026-11-16-proved-act_add) |
+| 2026-11-17 | 0.5 | Proved `run_add` (a whole circuit respects addition of Paulis), by induction on the circuit. [Details](#2026-11-17-proved-run_add) |
 
 ---
 
@@ -78,3 +79,25 @@ U(PQ)U† = (UPU†)(UQU†).
   why the gate rules in `act` are what conjugation gives (N&C 10.5.1–10.5.2).
 
 **Next:** `run_add`, by induction on the circuit.
+
+## 2026-11-17: Proved run_add
+
+**What it says:** `run c (p + q) = run c p + run c q`. `act_add` showed one gate respects
+addition; this extends it to any circuit.
+
+**How the proof works** (`CliffordEquiv/Linear.lean`): induction on the list of gates.
+1. `induction c generalizing p q with | nil => … | cons g gs ih => …`.
+2. Base case (empty circuit): `rfl`, since `run [] x` is `x` by definition.
+3. Inductive step: `simp only [run_cons]` unfolds `run (g :: gs) x` to `run gs (act g x)` in all
+   three places; `rw [act_add]` splits `act g (p + q)`; `rw [ih]` finishes.
+
+**What I learned:**
+- Induction on a list works like induction on ℕ: a case for the empty list `[]` and a case for
+  `g :: gs` (first gate `g`, remaining gates `gs`), with the induction hypothesis `ih` about `gs`.
+- `generalizing p q` makes `ih` hold for *all* Paulis, not just the original `p` and `q`. It's
+  needed because the step uses `ih` on `act g p` and `act g q`. Without it, `rw [ih]` fails to
+  find `run gs (p + q)` in the goal.
+- `rw [h]` replaces the left side of `h` with its right side, but only for the first match it
+  finds; `simp only [h]` rewrites every match. `rw` closes the goal automatically once both sides are identical.
+
+**Next:** `act_H_preserves_omega`, the first proof about a sum (`∑`).
