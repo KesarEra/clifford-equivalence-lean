@@ -35,7 +35,34 @@ theorem act_S_preserves_omega (a : Fin n) (p q : SPauli n) :
 
 theorem act_CNOT_preserves_omega (a b : Fin n) (hab : a ≠ b) (p q : SPauli n) :
     omega (act (.CNOT a b) p) (act (.CNOT a b) q) = omega p q := by
-  sorry
+    unfold omega
+    have key : ∀ i,
+        (act (CGate.CNOT a b) p).x i * (act (CGate.CNOT a b) q).z i
+          + (act (CGate.CNOT a b) p).z i * (act (CGate.CNOT a b) q).x i
+        = (p.x i * q.z i + p.z i * q.x i)                           -- old term
+          + (if i = a then p.x a * q.z b + p.z b * q.x a else 0)    -- + K at qubit a
+          + (if i = b then p.x a * q.z b + p.z b * q.x a else 0)    -- + K at qubit b
+          := by
+          intro i
+          simp only [act]
+          split_ifs with hb ha ha
+          · exfalso
+            apply hab
+            rw [← ha]
+            exact hb
+          · rw [hb]
+            ring
+          · rw [ha]
+            ring
+          · ring
+    rw [Finset.sum_congr rfl (fun i _ => key i)]
+    rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
+    rw [Finset.sum_ite_eq', Finset.sum_ite_eq']
+    simp only [Finset.mem_univ, ite_true]
+    generalize ∑ x, (p.x x * q.z x + p.z x * q.x x) = s
+    generalize (p.x a * q.z b + p.z b * q.x a) = k
+    revert s k
+    decide
 
 /-- Every well-formed gate preserves the symplectic form (commutation relations). -/
 theorem act_preserves_omega (g : CGate n) (hg : g.WellFormed) (p q : SPauli n) :

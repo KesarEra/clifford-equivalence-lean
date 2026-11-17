@@ -6,6 +6,7 @@
 | 2026-11-16 | 2 | Proved `act_add` (each gate's action respects addition of Paulis): the first theorem without `sorry`. Added `#eval` gate checks to `Examples.lean`. [Details](#2026-11-16-proved-act_add) |
 | 2026-11-17 | 0.5 | Proved `run_add` (a whole circuit respects addition of Paulis), by induction on the circuit. [Details](#2026-11-17-proved-run_add) |
 | 2026-11-17 | 1.5 | Proved that H and S preserve the symplectic form (`act_H_preserves_omega`, `act_S_preserves_omega`). Background on commutation and the symplectic form. [Details](#2026-11-17-proved-h-and-s-preserve-the-symplectic-form) |
+| 2026-11-17 | 2 | Proved that CNOT preserves the symplectic form (`act_CNOT_preserves_omega`), the hardest of the gate lemmas. [Details](#2026-11-17-proved-cnot-preserves-the-symplectic-form) |
 
 ---
 
@@ -132,3 +133,36 @@ lemmas should hold.
 
 **Next:** `act_CNOT_preserves_omega`. Individual terms change for CNOT, so the proof works with
 the whole sum: the changes at qubits `a` and `b` are both `+ K`, and K + K = 0.
+
+## 2026-11-17: Proved CNOT preserves the symplectic form
+
+**Why it's harder than H and S:** CNOT (control `a`, target `b`) changes individual terms of the
+sum, so per-term equality fails. Working out new − old by hand for each qubit:
+- qubit `a` (z gets `+ z b`): new term = old term + K;
+- qubit `b` (x gets `+ x a`): new term = old term + K;
+- every other qubit: unchanged;
+
+where K = `p.x a * q.z b + p.z b * q.x a`. The extra is the same at `a` and `b` because it comes
+from the *other* qubit leaking in. So the sum gains K + K = 0. This needs `a ≠ b`.
+
+**How the proof works** (`CliffordEquiv/Symplectic.lean`), written top-down:
+1. `have key : ∀ i, new term = old term + (if i = a then K else 0) + (if i = b then K else 0)`.
+   Proof: `split_ifs` gives four cases. `i = a` and `i = b` together is impossible
+   (`exfalso`, `apply hab`, then show `a = b`); the other three are `rw` then `ring`.
+2. `rw [Finset.sum_congr rfl (fun i _ => key i)]` rewrites every term using `key`.
+3. `Finset.sum_add_distrib` (twice) splits into three sums.
+4. `Finset.sum_ite_eq'` (twice) collapses each `if`-sum to K, leaving old sum + K + K.
+5. `generalize` the sum and K, `revert`, `decide`.
+
+**What I learned:**
+- When only a few terms of a sum change, write each term as old + (extra only at that qubit),
+  using `if i = a then … else 0`; Mathlib's `Finset.sum_ite_eq'` sums that shape.
+- `have name : statement := by …` proves a helper fact inside a proof. Writing the outline
+  first, with `sorry` for the helper, then filling it in, keeps a long proof manageable.
+- Impossible cases: `exfalso` turns the goal into `False`; `apply hab` (with `hab : a ≠ b`)
+  reduces it to proving `a = b`. `rw [← h]` rewrites right to left.
+- Passing a proof directly to a lemma (`Finset.sum_congr rfl (fun i _ => key i)`) as an
+  alternative to `apply`.
+
+**Next:** `act_preserves_omega` (cases on the gate, using the three lemmas) and
+`run_preserves_omega` (induction on the circuit).
