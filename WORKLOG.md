@@ -5,6 +5,7 @@
 | 2026-10-27 | 1.5 | Created the git repo and Lean + Mathlib project, pinned to `v4.36.0-rc1`. Statements compile with `sorry`; demo identities pass `decide`. [Details](#2026-10-27-repo-and-project-setup) |
 | 2026-11-16 | 2 | Proved `act_add` (each gate's action respects addition of Paulis): the first theorem without `sorry`. Added `#eval` gate checks to `Examples.lean`. [Details](#2026-11-16-proved-act_add) |
 | 2026-11-17 | 0.5 | Proved `run_add` (a whole circuit respects addition of Paulis), by induction on the circuit. [Details](#2026-11-17-proved-run_add) |
+| 2026-11-17 | 1.5 | Proved that H and S preserve the symplectic form (`act_H_preserves_omega`, `act_S_preserves_omega`). Background on commutation and the symplectic form. [Details](#2026-11-17-proved-h-and-s-preserve-the-symplectic-form) |
 
 ---
 
@@ -101,3 +102,33 @@ addition; this extends it to any circuit.
   finds; `simp only [h]` rewrites every match. `rw` closes the goal automatically once both sides are identical.
 
 **Next:** `act_H_preserves_omega`, the first proof about a sum (`∑`).
+
+## 2026-11-17: Proved H and S preserve the symplectic form
+
+**What it says:** `omega (act g p) (act g q) = omega p q` for `g = H a` and `g = S a`: these
+gates don't change whether two Paulis commute.
+
+**Background:** two Paulis commute or anticommute. Per qubit, `x·z′ + z·x′` counts the
+"clashes" (a bit flip in one where the other has a phase flip); over many qubits each clash
+contributes a minus sign, so only the parity matters. That parity is `omega`, a sum mod 2:
+0 = commute, 1 = anticommute. Conjugation by any gate preserves commutation, which is why these
+lemmas should hold.
+
+**How the proofs work** (`CliffordEquiv/Symplectic.lean`):
+1. `unfold omega` exposes the sum `∑ i, …`.
+2. `apply Finset.sum_congr rfl` reduces "the sums are equal" to "each term is equal".
+3. `intro i _` picks an arbitrary qubit; `simp only [act]` unfolds the gate rule.
+4. `split_ifs with h`: is `i` the qubit the gate acts on?
+   - H, `i = a`: the two products are swapped, so `ring`. Otherwise `rfl`.
+   - S, `i = a`: the two sides differ by `2·x·x′`, zero only because 1 + 1 = 0 in `ZMod 2`, so
+     `ring` fails. `generalize` the four values to variables, `revert` them, and `decide` checks
+     all 16 cases. Otherwise `rfl`.
+
+**What I learned:**
+- `Finset.sum_congr`: equal terms give equal sums. `apply` reduces a goal to a lemma's hypotheses.
+- `ring` only uses facts true in every ring; it doesn't know 2 = 0 in `ZMod 2`. `ring_nf` shows what's left over.
+- "Make it finite, then `decide`": `generalize` replaces expressions with variables, `revert`
+  turns them into a `∀`, and `decide` checks every case of a finite type.
+
+**Next:** `act_CNOT_preserves_omega`. Individual terms change for CNOT, so the proof works with
+the whole sum: the changes at qubits `a` and `b` are both `+ K`, and K + K = 0.
