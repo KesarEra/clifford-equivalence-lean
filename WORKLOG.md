@@ -7,6 +7,7 @@
 | 2026-11-17 | 0.5 | Proved `run_add` (a whole circuit respects addition of Paulis), by induction on the circuit. [Details](#2026-11-17-proved-run_add) |
 | 2026-11-17 | 1.5 | Proved that H and S preserve the symplectic form (`act_H_preserves_omega`, `act_S_preserves_omega`). Background on commutation and the symplectic form. [Details](#2026-11-17-proved-h-and-s-preserve-the-symplectic-form) |
 | 2026-11-17 | 2 | Proved that CNOT preserves the symplectic form (`act_CNOT_preserves_omega`), the hardest of the gate lemmas. [Details](#2026-11-17-proved-cnot-preserves-the-symplectic-form) |
+| 2026-11-18 | 1 | Proved `act_preserves_omega` and `run_preserves_omega`: every well-formed gate and circuit preserves the symplectic form. Theorem (a) is complete; `Symplectic.lean` has no `sorry`. [Details](#2026-11-18-completed-theorem-a-symplectic-preservation) |
 
 ---
 
@@ -166,3 +167,29 @@ from the *other* qubit leaking in. So the sum gains K + K = 0. This needs `a ≠
 
 **Next:** `act_preserves_omega` (cases on the gate, using the three lemmas) and
 `run_preserves_omega` (induction on the circuit).
+
+## 2026-11-18: Completed theorem (a), symplectic preservation
+
+**What it says:** every well-formed gate (`act_preserves_omega`) and every well-formed circuit
+(`run_preserves_omega`) preserves `omega`, i.e. commutation relations. With the three gate
+lemmas, `Symplectic.lean` now has no `sorry`.
+
+**How the proofs work** (`CliffordEquiv/Symplectic.lean`):
+- `act_preserves_omega`: `cases g`, then `exact` the matching gate lemma. For CNOT, `hg` is
+  passed as the `a ≠ b` proof.
+- `run_preserves_omega`: induction on the circuit, `generalizing p q` as in `run_add`.
+  `simp only [run_cons]`, then `rw [ih]`, which leaves two goals: the first gate preserves
+  `omega` (`act_preserves_omega`) and the rest of the circuit is well formed.
+
+**What I learned:**
+- A theorem can be used like a function: `act_H_preserves_omega a p q` is a proof of that
+  statement for those arguments, and `exact` closes the goal with it.
+- Lean unfolds definitions when checking types: `(CGate.CNOT a b).WellFormed` is defined as
+  `a ≠ b`, so `hg` can be passed where `a ≠ b` is expected.
+- If a hypothesis depends on the variable being inducted on (`hc` on `c`), Lean adds it to the
+  induction hypothesis: `ih : Circuit.WellFormed gs → …`.
+- `rw` with a conditional equation leaves the condition as an extra goal.
+- `by simp` (or `by simp [h]`) proves simple list-membership facts such as `g ∈ g :: gs`.
+
+**Next:** theorem (c): `run_eq_of_basis` (agreement on basis Paulis implies agreement
+everywhere), then `check_sound` and `check_complete`.

@@ -67,11 +67,21 @@ theorem act_CNOT_preserves_omega (a b : Fin n) (hab : a ≠ b) (p q : SPauli n) 
 /-- Every well-formed gate preserves the symplectic form (commutation relations). -/
 theorem act_preserves_omega (g : CGate n) (hg : g.WellFormed) (p q : SPauli n) :
     omega (act g p) (act g q) = omega p q := by
-  sorry
+    cases g with
+    | H a => exact act_H_preserves_omega a p q
+    | S a => exact act_S_preserves_omega a p q
+    | CNOT a b => exact act_CNOT_preserves_omega a b hg p q
 
 /-- Every well-formed circuit preserves the symplectic form. -/
 theorem run_preserves_omega (c : Circuit n) (hc : c.WellFormed) (p q : SPauli n) :
     omega (run c p) (run c q) = omega p q := by
-  sorry
+    induction c generalizing p q with
+    | nil => rfl
+    | cons g gs ih =>
+      simp only [run_cons]
+      rw [ih]
+      · exact act_preserves_omega g (hc g (by simp)) p q
+      · intro g' hg'
+        exact hc g' (by simp [hg'])
 
 end CliffordEquiv
