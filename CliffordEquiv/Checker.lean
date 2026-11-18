@@ -19,11 +19,27 @@ def check (c₁ c₂ : Circuit n) : Bool :=
 
 theorem check_sound (c₁ c₂ : Circuit n) (h : check c₁ c₂ = true) :
     ∀ p, run c₁ p = run c₂ p := by
-  sorry
+    unfold check at h
+    rw [List.all_eq_true] at h
+    have hi : ∀ i, run c₁ (SPauli.X i) = run c₂ (SPauli.X i)
+              ∧ run c₁ (SPauli.Z i) = run c₂ (SPauli.Z i) := by
+      intro i
+      have hb := h i (List.mem_finRange i)
+      simp only [Bool.and_eq_true, decide_eq_true_eq] at hb
+      exact hb
+    apply run_eq_of_basis
+    · intro i
+      exact (hi i).1
+    · intro i
+      exact (hi i).2
 
 theorem check_complete (c₁ c₂ : Circuit n) (h : ∀ p, run c₁ p = run c₂ p) :
     check c₁ c₂ = true := by
-  sorry
+    unfold check
+    rw [List.all_eq_true]
+    intro i _
+    rw [h (SPauli.X i), h (SPauli.Z i)] -- Also can be achieved with: simp [h]
+    simp
 
 theorem check_iff (c₁ c₂ : Circuit n) :
     check c₁ c₂ = true ↔ ∀ p, run c₁ p = run c₂ p :=

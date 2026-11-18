@@ -8,6 +8,7 @@
 | 2026-11-17 | 1.5 | Proved that H and S preserve the symplectic form (`act_H_preserves_omega`, `act_S_preserves_omega`). Background on commutation and the symplectic form. [Details](#2026-11-17-proved-h-and-s-preserve-the-symplectic-form) |
 | 2026-11-17 | 2 | Proved that CNOT preserves the symplectic form (`act_CNOT_preserves_omega`), the hardest of the gate lemmas. [Details](#2026-11-17-proved-cnot-preserves-the-symplectic-form) |
 | 2026-11-18 | 1 | Proved `act_preserves_omega` and `run_preserves_omega`: every well-formed gate and circuit preserves the symplectic form. Theorem (a) is complete; `Symplectic.lean` has no `sorry`. [Details](#2026-11-18-completed-theorem-a-symplectic-preservation) |
+| 2026-11-18 | 2 | Proved checker completeness (`check_complete`) and soundness (`check_sound`, assuming `run_eq_of_basis`). Background on what soundness and completeness mean here. [Details](#2026-11-18-proved-checker-soundness-and-completeness) |
 
 ---
 
@@ -193,3 +194,39 @@ lemmas, `Symplectic.lean` now has no `sorry`.
 
 **Next:** theorem (c): `run_eq_of_basis` (agreement on basis Paulis implies agreement
 everywhere), then `check_sound` and `check_complete`.
+
+## 2026-11-18: Proved checker soundness and completeness
+
+**What they say:** `check c₁ c₂` tests only the 2n basis Paulis, instead of all 4ⁿ.
+- **Completeness** (`check_complete`): if the circuits agree on every Pauli, `check` says `true`
+  (no false negatives).
+- **Soundness** (`check_sound`): if `check` says `true`, the circuits agree on every Pauli (no
+  false positives).
+- Together (`check_iff`): `check = true` ↔ the circuits are equivalent. Both are needed: a
+  checker that always says `false` is sound, and one that always says `true` is complete.
+
+**Why one is easy and the other hard:** completeness only *specialises* (agreeing on all Paulis
+includes the basis ones) and would hold for any functions. Soundness *generalises* from 2n tests
+to 4ⁿ inputs, which is only true because circuits are additive (`run_add`) and every Pauli is a
+sum of basis Paulis. That argument is `run_eq_of_basis`, the last `sorry`; `check_sound` is fully
+verified once it's proved, and so are the demo identities (proof by reflection: `by decide`
+runs the checker, `check_sound` turns the result into a theorem).
+
+**How the proofs work** (`CliffordEquiv/Checker.lean`):
+- `check_complete`: `unfold check`, `rw [List.all_eq_true]` (turns "`all` is true" into "for
+  every qubit"), `intro i _`, rewrite with `h` at `X i` and `Z i`, then `simp`.
+- `check_sound`: the same unpacking applied to the hypothesis (`unfold check at h`,
+  `rw [...] at h`); a `have` turns it into plain equations, using `h i (List.mem_finRange i)`
+  and `simp only [Bool.and_eq_true, decide_eq_true_eq] at hb`; then `apply run_eq_of_basis`
+  leaves two goals, closed with `(hx i).1` and `(hx i).2`.
+
+**What I learned:**
+- `Bool` (computed `true`/`false`) vs `Prop` (statements to prove); `decide P` turns a
+  decidable proposition into a `Bool`.
+- `at h` makes a tactic work on a hypothesis instead of the goal.
+- Applying a `∀ x ∈ list, …` hypothesis to a value and a membership proof.
+- `∧` ("and"); `.1` and `.2` take its two parts.
+- A `sorry`'d lemma can be used in other proofs; they become fully proved once it is.
+- `have … :=` needs `by` before tactic lines; without it Lean reports `Unknown identifier`.
+
+**Next:** `run_eq_of_basis`, in four stages, starting with `act_zero` and `run_zero`.
