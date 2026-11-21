@@ -1,7 +1,7 @@
 import CliffordEquiv.Checker
 
 /-!
-# Demo identities (plan §6.2)
+# Demo identities
 
 Each is proved by running the checker (`decide`) and applying `check_sound`.
 -/
@@ -32,7 +32,8 @@ example : ∀ p : SPauli 2,
     run [H 0, H 1, CNOT 0 1, H 0, H 1] p = run [CNOT 1 0] p :=
   check_sound _ _ (by decide)
 
-/-- Limitation (plan §6.1): `S S = Z` acts trivially here, though it is not the identity. -/
+/-- Limitation of the phase-free setting: `S S = Z` acts trivially here, though it is not the
+identity. -/
 example : ∀ p : SPauli 1, run [S 0, S 0] p = run [] p :=
   check_sound _ _ (by decide)
 

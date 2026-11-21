@@ -3,8 +3,9 @@ import CliffordEquiv.Circuit
 /-!
 # Theorem (a): gates preserve the symplectic form
 
-Plan §6.3: `H` and `S` are per-coordinate identities lifted with `Finset.sum_congr`;
-`CNOT` needs the `a` and `b` terms split out of the sum (`Finset.add_sum_erase`, using `a ≠ b`).
+`H` and `S` leave every term of the sum unchanged, so they reduce to one qubit with
+`Finset.sum_congr`. `CNOT` changes the terms at qubits `a` and `b`, each by the same amount `K`;
+summing gives `omega p q + K + K`, which equals `omega p q` in `ZMod 2` (this needs `a ≠ b`).
 -/
 
 namespace CliffordEquiv

@@ -40,9 +40,6 @@ instance : Zero (SPauli n) := ⟨⟨0, 0⟩⟩
 @[simp] lemma zero_x : (0 : SPauli n).x = 0 := rfl
 @[simp] lemma zero_z : (0 : SPauli n).z = 0 := rfl
 
--- TODO (week 3): it may be convenient to upgrade this to `AddCommGroup` and
--- `Module (ZMod 2)` so that `Finset.sum` works for the basis decomposition.
-
 /-- Single-qubit label of qubit `i`: one of `I`, `X`, `Z`, `Y`. -/
 def label (p : SPauli n) (i : Fin n) : Char :=
   match decide (p.x i = 1), decide (p.z i = 1) with
