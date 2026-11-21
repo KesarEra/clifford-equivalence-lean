@@ -73,3 +73,7 @@ To check that a theorem has no unfinished proofs, add this to a file that import
 ```lean
 #print axioms CliffordEquiv.check_iff
 ```
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
