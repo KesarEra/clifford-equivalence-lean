@@ -9,6 +9,7 @@
 | 2026-11-17 | 2 | Proved that CNOT preserves the symplectic form (`act_CNOT_preserves_omega`), the hardest of the gate lemmas. [Details](#2026-11-17-proved-cnot-preserves-the-symplectic-form) |
 | 2026-11-18 | 1 | Proved `act_preserves_omega` and `run_preserves_omega`: every well-formed gate and circuit preserves the symplectic form. Theorem (a) is complete; `Symplectic.lean` has no `sorry`. [Details](#2026-11-18-completed-theorem-a-symplectic-preservation) |
 | 2026-11-18 | 2 | Proved checker completeness (`check_complete`) and soundness (`check_sound`, assuming `run_eq_of_basis`). Background on what soundness and completeness mean here. [Details](#2026-11-18-proved-checker-soundness-and-completeness) |
+| 2026-11-21 | 3 | Proved `run_eq_of_basis` (agreement on basis Paulis implies agreement everywhere), the last `sorry`. All MVP theorems proved. [Details](#2026-11-21-proved-run_eq_of_basis-all-mvp-theorems-proved) |
 
 ---
 
@@ -230,3 +231,39 @@ runs the checker, `check_sound` turns the result into a theorem).
 - `have … :=` needs `by` before tactic lines; without it Lean reports `Unknown identifier`.
 
 **Next:** `run_eq_of_basis`, in four stages, starting with `act_zero` and `run_zero`.
+
+## 2026-11-21: Proved run_eq_of_basis, all MVP theorems proved
+
+**What it says:** if two circuits agree on every basis Pauli `X i` and `Z i`, they agree on
+every Pauli. This is "a linear map is determined by its values on a basis": `run` is additive
+(`run_add`) and every Pauli is a sum of basis Paulis. It completes `check_sound`, so the checker
+and the demo identities are now fully verified.
+
+**Idea:** build `p` up one qubit at a time, starting from `0` (all `I`), and show the circuits
+agree at every stage. Each step adds one qubit's part, which is `0`, `X j`, `Z j` or
+`X j + Z j`, and the circuits agree on all of those.
+
+**How the proof works** (`CliffordEquiv/Linear.lean`), in four stages:
+1. `act_zero`, `run_zero`: circuits map `0` to `0` (cases on the gate; induction on the circuit).
+2. `SPauli.restrict p s` (keep only qubits in `s`, others `I`) and `SPauli.single p j` (keep only
+   qubit `j`), with `restrict_empty` (= `0`), `restrict_univ` (= `p`) and `restrict_insert`
+   (adding a new qubit `j` adds `p.single j`).
+3. `zmod2_cases` (every bit is 0 or 1, by `decide`) and `single_eq`: `p.single j` is
+   `(if x-bit = 1 then X j else 0) + (if z-bit = 1 then Z j else 0)`. Four cases via `rcases`,
+   each checked coordinate by coordinate.
+4. `run_eq_of_basis`: `hsingle` (circuits agree on each `p.single j`, using `single_eq`,
+   `run_add`, `hX`, `hZ`, `run_zero`); `key` (agree on `p.restrict s` for every set `s`, by
+   `Finset.induction_on`); then `rw [← restrict_univ p]` and `exact key Finset.univ`.
+
+**What I learned:**
+- Induction on finite sets (`Finset.induction_on`): an `empty` case and an `insert j s` case
+  with `hj : j ∉ s`. The `j ∉ s` condition matters: adding a qubit's part twice cancels mod 2.
+- When a type lacks the structure for `∑` (here `SPauli` has only `+` and `0`), building the
+  object up step by step with helper definitions is an alternative.
+- `rcases h with h1 | h2` splits an "or"; `all_goals tac` runs a tactic on every open goal.
+- `ext i <;> tac` versus `ext i` then `tac` on the next line: the latter only acts on the first
+  of the two goals `ext` creates.
+
+**Status:** all MVP theorems (a), (b) and (c) are proved, with no `sorry`. `check_iff`,
+`run_preserves_omega` and `run_eq_of_basis` depend only on `propext`, `Classical.choice` and
+`Quot.sound`.
